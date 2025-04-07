@@ -9,3 +9,4 @@
 
 3. **Install Dependencies**:
    - After activating the virtual environment, use `pip install -r requirements.txt` to install all the libraries specified in the `requirements.txt` file.
+
