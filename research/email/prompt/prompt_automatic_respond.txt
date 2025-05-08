@@ -1,0 +1,8 @@
+Subject: {subject}
+Content: {content}
+Template: {template}
+Note: {note}
+
+Respond to the email by the 'subject' and 'content' above. Follow the 'template' and comply with the 'note'. Only return the respond email in this format:
+Subject: 
+Content:

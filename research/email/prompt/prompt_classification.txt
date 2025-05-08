@@ -1,0 +1,4 @@
+Subject: {subject}
+Content: {content}
+
+Classify the mail by the 'subject' and 'content' above to one of these classes: {classifications}. Only return the class name.
