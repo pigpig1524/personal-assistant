@@ -1,0 +1,6 @@
+Unified Communication Hub
+- Manage communication across platforms (Gmail, Outlook, Slack)
+- Extract actionable items and deadlines automatically
+- Generate prioritized summaries of important communications
+- Filter and label communications based on work/personal contexts
+- Draft contextually appropriate responses using templates and AI
