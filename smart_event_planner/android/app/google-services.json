@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "216372894060",
+    "project_id": "smart-event-planner-bede2",
+    "storage_bucket": "smart-event-planner-bede2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216372894060:android:bfc57058d08ba4aaae3b49",
+        "android_client_info": {
+          "package_name": "com.example.smart_event_planner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaj-MvL-T5UiVpTvHwoThcWIn9pnb4zcQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
