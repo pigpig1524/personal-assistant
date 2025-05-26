@@ -6,7 +6,7 @@ First of all, here are some important notes:
 
 Key is now copy to image when build Docker. This action is not good. But, in this phase, it's OK 
 
-Dcoker ignore file wiil be update later when final deployment is released
+Dcoker ignore file wiil be update later when final deployment is released.
 
 
 ## Setup environment variables
