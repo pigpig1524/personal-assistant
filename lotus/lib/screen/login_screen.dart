@@ -7,6 +7,7 @@ import 'package:lotus/screen/calendar_screen.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final logger = Logger();
 
@@ -51,31 +52,36 @@ class _LoginScreenState extends State<LoginScreen> {
     _checkLoginStatus();
   }
 
-  /// Read access token
+
   Future<void> _checkLoginStatus() async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user != null) {
     final token = await _loadAccessToken();
+
     if (token != null) {
-      logger.i("Tìm thấy token, chuyển tới CalendarScreen");
+      logger.i("User đã đăng nhập và tìm thấy token, chuyển tới CalendarScreen");
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => CalendarScreen(accessToken: token),
-          ),
+          MaterialPageRoute(builder: (_) => OnboardingScreen()),
         );
       }
     } else {
-      FirebaseAuth.instance.authStateChanges().listen((User? user) {
-        if (user != null && mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
-          );
-        }
-      });
+      logger.i("User đã đăng nhập nhưng không tìm thấy token, chuyển tới OnboardingScreen");
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => OnboardingScreen()),
+        );
+      }
     }
+  } else {
+    logger.i("Chưa có user đăng nhập, giữ nguyên màn hình Login");
   }
+}
 
+  /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -103,13 +109,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
       logger.i("Access Token: $accessToken");
 
-      // Save token
+      // Save token 
       await _saveAccessToken(accessToken);
 
-      // API Calendar
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final uid = user.uid;
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'idToken': googleAuth.idToken,
+          'accessToken': accessToken,
+          'email': user.email,
+          'displayName': user.displayName,
+          'lastSignIn': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      // Call API Calendar 
       final response = await http.get(
-        Uri.parse(
-            'https://www.googleapis.com/calendar/v3/calendars/primary/events'),
+        Uri.parse('https://www.googleapis.com/calendar/v3/calendars/primary/events'),
         headers: {
           'Authorization': 'Bearer $accessToken',
         },
@@ -121,6 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
         logger.w("Calendar error: ${response.statusCode} - ${response.body}");
       }
 
+      // Navigation after successful login
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login success!')),
@@ -146,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
   }
-
+  
   Future<String?> _loadAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
