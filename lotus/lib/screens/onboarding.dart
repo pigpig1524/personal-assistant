@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lotus/constants.dart';
-import 'package:lotus/screen/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:logger/logger.dart';
-import 'package:lotus/screen/calendar_screen.dart';
+
+import 'login_screen.dart';
+import 'calendar_screen.dart';
 
 final logger = Logger();
 class OnboardingScreen extends StatefulWidget {

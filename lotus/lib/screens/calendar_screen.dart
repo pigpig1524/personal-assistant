@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:lotus/screen/login_screen.dart';
+
+import 'login_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   final String accessToken;
