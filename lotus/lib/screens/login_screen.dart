@@ -59,14 +59,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final accessToken = await _refreshAccessToken();
 
       if (accessToken != null) {
-        logger.i("Access token làm mới thành công, chuyển tới CalendarScreen");
+        logger.i("Access token làm mới thành công, chuyển tới OnboardingScreen");
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CalendarScreen(accessToken: accessToken),
-            ),
-          );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => OnboardingScreen()),
+            );
         }
       } else {
         logger.w("Không thể làm mới token, chuyển tới OnboardingScreen");

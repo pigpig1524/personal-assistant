@@ -18,6 +18,16 @@ const chatusergradient = LinearGradient(
   ],
 );
 
+const pautegradient = LinearGradient(
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+  colors: [
+    Color(0xFFEEA4CE),
+    Color(0xFFC58BF2),
+    
+  ],
+);
+
 const chatbotgradient = LinearGradient(
   begin: Alignment.centerLeft,
   end: Alignment.centerRight,

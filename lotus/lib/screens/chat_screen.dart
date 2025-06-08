@@ -20,8 +20,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool _isVoiceInput = false;
   bool _isListening = false;
-  bool _isLoading = false; 
-  String? _errorMessage;   
+  bool _isLoading = false;
+  bool _showKeyboardInput = false;
+  String? _errorMessage;
+  bool _keyboardVisible = false;
+
   late stt.SpeechToText _speech;
 
   @override
@@ -31,6 +34,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _toggleListening() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
     if (!_isListening) {
       bool available = await _speech.initialize(
         onStatus: (status) {
@@ -81,6 +87,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _isLoading = false;
       _errorMessage = null;
       _isVoiceInput = false;
+      _showKeyboardInput = false;
+      _keyboardVisible = false;
     });
     _controller.clear();
     _scrollToBottom();
@@ -96,6 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     _scrollToBottom();
   }
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 300), () {
       if (_scrollController.hasClients) {
@@ -154,61 +163,125 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      child: Row(
-        children: [
-          IconButton(
-            icon: Icon(_isListening
-                ? Icons.stop
-                : (_isVoiceInput ? Icons.mic : Icons.keyboard)),
-            onPressed: () {
-              if (_isVoiceInput) {
-                _toggleListening();
-              } else {
-                setState(() {
-                  _isVoiceInput = !_isVoiceInput;
-                  _errorMessage = null;
-                });
-              }
-            },
-            tooltip: _isListening
-                ? "Dừng ghi âm"
-                : (_isVoiceInput ? "Chuyển sang bàn phím" : "Nhập bằng giọng nói"),
+    if (_isListening) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: Center(
+          child: Column(
+            children: [
+              const Text(
+                "I'm listening...",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _toggleListening,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: pautegradient,
+                  ),
+                  child: const Icon(Icons.pause, color: Colors.white, size: 30),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              onSubmitted: (_) => _sendMessage(),
-              enabled: !_isLoading,
-              decoration: const InputDecoration(
-                hintText: 'Nhập tin nhắn...',
-                filled: true,
-                fillColor: Color(0xFFF5F5F5),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
-                  borderSide: BorderSide.none,
+        ),
+      );
+    }
+
+    if (_showKeyboardInput) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                onSubmitted: (_) => _sendMessage(),
+                decoration: InputDecoration(
+                  hintText: 'Message...',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 6),
-          _isLoading
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: (_controller.text.trim().isEmpty || _isLoading)
-                      ? null
-                      : _sendMessage,
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: _sendMessage,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFB9B5F8),
                 ),
+                child: const Icon(Icons.send, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () {
+              // TODO: handle +
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.deepPurple.shade100),
+              ),
+              child: const Icon(Icons.add, color: Colors.deepPurple),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isVoiceInput = true;
+                _showKeyboardInput = false;
+                _toggleListening();
+              });
+            },
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFF92A3FD),
+              ),
+              child: const Icon(Icons.mic, color: Colors.white, size: 30),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isVoiceInput = false;
+                _showKeyboardInput = true;
+              });
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.deepPurple.shade100),
+              ),
+              child: const Icon(Icons.keyboard, color: Colors.deepPurple),
+            ),
+          ),
         ],
       ),
     );
@@ -216,8 +289,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ?? 'User';
     final String? userAvatarUrl = FirebaseAuth.instance.currentUser?.photoURL;
-
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0;
+    if (isKeyboardVisible && !_keyboardVisible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+    _keyboardVisible = isKeyboardVisible;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -226,9 +308,9 @@ class _ChatScreenState extends State<ChatScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
-          );
+              context,
+              MaterialPageRoute(builder: (_) => OnboardingScreen()),
+            );
           },
         ),
         actions: [
@@ -254,13 +336,58 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) => _buildMessage(_messages[index]),
-            ),
+            child: _messages.isEmpty
+                ? Align(
+                    alignment: Alignment.topCenter,
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 60.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Hello, $displayName!",
+                              style: onboardingheading,
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              "How can I assist you today?",
+                              style: onboardingbody,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 30),
+                            Image.asset(
+                              "assets/images/robot2.png",
+                              height: 184,
+                              width: 163,
+                              fit: BoxFit.cover,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      if (_showKeyboardInput) {
+                        FocusScope.of(context).unfocus();
+                        setState(() {
+                          _showKeyboardInput = false;
+                          _isVoiceInput = false;
+                        });
+                      }
+                    },
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) => _buildMessage(_messages[index]),
+                    ),
+                  ),
           ),
+
+
           _buildInputBar(),
         ],
       ),
