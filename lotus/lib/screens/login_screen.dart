@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
+import 'package:lotus/screens/onboarding.dart';
+import 'package:lotus/screens/calendar_screen.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'onboarding.dart';
-import 'calendar_screen.dart';
 
 final logger = Logger();
 
@@ -53,36 +52,36 @@ class _LoginScreenState extends State<LoginScreen> {
     _checkLoginStatus();
   }
 
-
   Future<void> _checkLoginStatus() async {
-  final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
-  if (user != null) {
-    final token = await _loadAccessToken();
+    if (user != null) {
+      final accessToken = await _refreshAccessToken();
 
-    if (token != null) {
-      logger.i("User đã đăng nhập và tìm thấy token, chuyển tới CalendarScreen");
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => OnboardingScreen()),
-        );
+      if (accessToken != null) {
+        logger.i("Access token làm mới thành công, chuyển tới CalendarScreen");
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CalendarScreen(accessToken: accessToken),
+            ),
+          );
+        }
+      } else {
+        logger.w("Không thể làm mới token, chuyển tới OnboardingScreen");
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => OnboardingScreen()),
+          );
+        }
       }
     } else {
-      logger.i("User đã đăng nhập nhưng không tìm thấy token, chuyển tới OnboardingScreen");
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => OnboardingScreen()),
-        );
-      }
+      logger.i("Chưa có user đăng nhập, giữ nguyên màn hình Login");
     }
-  } else {
-    logger.i("Chưa có user đăng nhập, giữ nguyên màn hình Login");
   }
-}
 
-  /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -110,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       logger.i("Access Token: $accessToken");
 
-      // Save token 
       await _saveAccessToken(accessToken);
 
       final user = FirebaseAuth.instance.currentUser;
@@ -125,7 +123,6 @@ class _LoginScreenState extends State<LoginScreen> {
         }, SetOptions(merge: true));
       }
 
-      // Call API Calendar 
       final response = await http.get(
         Uri.parse('https://www.googleapis.com/calendar/v3/calendars/primary/events'),
         headers: {
@@ -139,7 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
         logger.w("Calendar error: ${response.statusCode} - ${response.body}");
       }
 
-      // Navigation after successful login
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login success!')),
@@ -165,10 +161,41 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
   }
-  
+
   Future<String?> _loadAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
+  }
+
+  Future<String?> _refreshAccessToken() async {
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      scopes: [
+        'email',
+        'https://www.googleapis.com/auth/calendar',
+      ],
+    );
+
+    GoogleSignInAccount? googleUser = googleSignIn.currentUser;
+
+    // Nếu chưa có user, thử đăng nhập âm thầm
+    googleUser ??= await googleSignIn.signInSilently();
+
+    if (googleUser == null) {
+      logger.w("Không thể đăng nhập lại silently");
+      return null;
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final newAccessToken = googleAuth.accessToken;
+
+    if (newAccessToken != null) {
+      await _saveAccessToken(newAccessToken);
+      logger.i("Access token đã được làm mới");
+      return newAccessToken;
+    } else {
+      logger.w("Lỗi khi làm mới access token");
+      return null;
+    }
   }
 
   @override

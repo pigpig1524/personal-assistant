@@ -3,6 +3,7 @@ import 'package:lotus/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:logger/logger.dart';
+import 'package:lotus/screens/chat_screen.dart';
 
 import 'login_screen.dart';
 import 'calendar_screen.dart';
@@ -165,6 +166,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     
                   ),
                   child: const Text("Test", style: auth1body,)
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => ChatScreen()),
+                  );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: peri, 
+                    minimumSize: Size(364, 48),  
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0), 
+                    ),
+                    
+                  ),
+                  child: const Text("Chat", style: auth1body,)
                 ),
               ],
             ),
