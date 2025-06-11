@@ -169,15 +169,15 @@ class _ChatScreenState extends State<ChatScreen> {
             _messages.add({
               'role': 'assistant',
               'content': success
-                  ? '🗓 Sự kiện "${data['title'] ?? data['summary']}" đã được tạo thành công!'
-                  : '❌ Không thể tạo sự kiện. Vui lòng kiểm tra thông tin.',
+                  ? 'Sự kiện "${data['title'] ?? data['summary']}" đã được tạo thành công!'
+                  : 'Không thể tạo sự kiện. Vui lòng kiểm tra thông tin.',
             });
           });
         } else {
           setState(() {
             _messages.add({
               'role': 'assistant',
-              'content': '❌ Thiếu thông tin hoặc không thể lấy access token.',
+              'content': 'Thiếu thông tin hoặc không thể lấy access token.',
             });
           });
         }
