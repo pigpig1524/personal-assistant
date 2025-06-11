@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:lotus/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:logger/logger.dart';
+import 'package:lotus/constants.dart';
 import 'package:lotus/screens/chat_screen.dart';
-
-import 'login_screen.dart';
-import 'calendar_screen.dart';
+import 'package:lotus/screens/login_screen.dart';
+import 'package:lotus/screens/calendar_screen.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final logger = Logger();
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -38,6 +39,7 @@ class CustomButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           side: isTransparent ? const BorderSide(color: Colors.black) : BorderSide.none,
         ),
+        minimumSize: const Size(364, 48),
       ),
       child: child,
     );
@@ -45,14 +47,22 @@ class CustomButton extends StatelessWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  
-  Future<void> signOut() async {
+  static const _buttonSpacing = 16.0;
+  static const _imageHeight = 184.0;
+  static const _imageWidth = 163.0;
+
+  Future<void> _signOut() async {
     try {
+      // Sign out from Firebase and Google
       await FirebaseAuth.instance.signOut();
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final googleSignIn = GoogleSignIn();
       if (await googleSignIn.isSignedIn()) {
         await googleSignIn.signOut();
       }
+
+      // Clear access token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('access_token');
 
       if (mounted) {
         Navigator.pushReplacement(
@@ -61,12 +71,62 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       }
     } catch (e) {
+      logger.e('Error signing out: $e');
       if (mounted) {
-        logger.i('Error signout: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi đăng xuất: $e')),
+        );
       }
     }
   }
 
+  Future<void> _navigateToCalendar() async {
+    try {
+      // Load access token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('access_token');
+
+      if (accessToken != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CalendarScreen(accessToken: accessToken),
+          ),
+        );
+      } else {
+        // Try to refresh token if not available
+        final googleSignIn = GoogleSignIn(
+          scopes: ['email', 'https://www.googleapis.com/auth/calendar.events'],
+        );
+        final googleUser = await googleSignIn.signInSilently();
+        if (googleUser == null) {
+          throw Exception('Không thể đăng nhập lại tự động');
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final newToken = googleAuth.accessToken;
+
+        if (newToken != null && mounted) {
+          await prefs.setString('access_token', newToken);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CalendarScreen(accessToken: newToken),
+            ),
+          );
+        } else {
+          throw Exception('Không thể lấy Access Token');
+        }
+      }
+    } catch (e) {
+      logger.e('Lỗi khi truy cập Calendar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           Container(
             decoration: const BoxDecoration(
-              color: white,
+              gradient: auth1gradient, // Use gradient for consistency with LoginScreen
             ),
           ),
           Align(
@@ -87,102 +147,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  "assets/images/robot2.png",
-                  height: 184,
-                  width: 163,
+                  'assets/images/robot2.png',
+                  height: _imageHeight,
+                  width: _imageWidth,
                   fit: BoxFit.cover,
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  "Welcome $displayName !",
+                  'Welcome, $displayName!',
                   style: onboardingheading,
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  "Your AI companion for everyday tasks",
+                  'Your AI companion for everyday tasks',
                   style: onboardingbody,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 120),
-                ElevatedButton(
-                  onPressed: () {
-                    signOut(); 
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: peri, 
-                    minimumSize: Size(364, 48),  
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0), 
-                    ),
-                    
-                  ),
-                  child: const Text("Sign Out", style: auth1body,)
+                const SizedBox(height: 60),
+                CustomButton(
+                  onPressed: _signOut,
+                  child: const Text('Sign Out', style: onboardingheading),
                 ),
-                const SizedBox(height: 120),
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      final GoogleSignIn googleSignIn = GoogleSignIn(
-                        scopes: ['email', 'https://www.googleapis.com/auth/calendar.readonly'],
-                      );
-                      
-                      final googleUser = await googleSignIn.signIn();
-                      if (googleUser == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đăng nhập Google thất bại')),
-                        );
-                        return;
-                      }
-
-                      final googleAuth = await googleUser.authentication;
-                      final accessToken = googleAuth.accessToken;
-
-                      if (accessToken != null && mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CalendarScreen(accessToken: accessToken),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Không thể lấy Access Token')),
-                        );
-                      }
-                    } catch (e) {
-                      logger.e("Lỗi khi đăng nhập Google: $e");
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Lỗi: $e')),
-                      );
-                    }
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: peri, 
-                    minimumSize: Size(364, 48),  
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0), 
-                    ),
-                    
-                  ),
-                  child: const Text("Test", style: auth1body,)
+                const SizedBox(height: _buttonSpacing),
+                CustomButton(
+                  onPressed: _navigateToCalendar,
+                  child: const Text('View Calendar', style: onboardingheading),
                 ),
-                ElevatedButton(
+                const SizedBox(height: _buttonSpacing),
+                CustomButton(
                   onPressed: () {
                     Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => ChatScreen()),
-                  );
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChatScreen()),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: peri, 
-                    minimumSize: Size(364, 48),  
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0), 
-                    ),
-                    
-                  ),
-                  child: const Text("Chat", style: auth1body,)
+                  child: const Text('Start Chat', style: onboardingheading),
                 ),
               ],
             ),
