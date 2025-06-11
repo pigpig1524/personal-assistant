@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
 import 'package:lotus/screens/onboarding.dart';
-import 'package:lotus/screens/calendar_screen.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,12 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final accessToken = await _refreshAccessToken();
 
       if (accessToken != null) {
+        await _updateAccessTokenToFirestore(user, accessToken);
         logger.i("Access token làm mới thành công, chuyển tới OnboardingScreen");
         if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => OnboardingScreen()),
-            );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => OnboardingScreen()),
+          );
         }
       } else {
         logger.w("Không thể làm mới token, chuyển tới OnboardingScreen");
@@ -80,20 +80,31 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _updateAccessTokenToFirestore(User user, String accessToken) async {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'accessToken': accessToken,
+      'email': user.email,
+      'displayName': user.displayName,
+      'lastSignIn': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: [
           'email',
-          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events',
         ],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return;
+      if (googleUser == null) {
+        logger.w("Google Sign-In bị hủy");
+        return;
+      }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -105,22 +116,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final accessToken = googleAuth.accessToken;
       if (accessToken == null) throw Exception("Access token is null");
 
-      logger.i("Access Token: $accessToken");
+      logger.i("Access Token length: ${accessToken.length}");
 
       await _saveAccessToken(accessToken);
 
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final uid = user.uid;
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
-          'idToken': googleAuth.idToken,
-          'accessToken': accessToken,
-          'email': user.email,
-          'displayName': user.displayName,
-          'lastSignIn': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        await _updateAccessTokenToFirestore(user, accessToken);
       }
 
+      // Test the token (optional, for debugging)
       final response = await http.get(
         Uri.parse('https://www.googleapis.com/calendar/v3/calendars/primary/events'),
         headers: {
@@ -136,13 +141,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login success!')),
+          const SnackBar(content: Text('Đăng nhập thành công!')),
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => CalendarScreen(accessToken: accessToken),
-          ),
+          MaterialPageRoute(builder: (_) => OnboardingScreen()),
         );
       }
     } catch (e) {
@@ -169,13 +172,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final GoogleSignIn googleSignIn = GoogleSignIn(
       scopes: [
         'email',
-        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events',
       ],
     );
 
     GoogleSignInAccount? googleUser = googleSignIn.currentUser;
-
-    // Nếu chưa có user, thử đăng nhập âm thầm
     googleUser ??= await googleSignIn.signInSilently();
 
     if (googleUser == null) {
