@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
 import 'package:lotus/services/dialogflow_service.dart';
+import 'package:lotus/services/calendar_service.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 import 'onboarding.dart';
+
+final logger = Logger();
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -17,6 +23,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['https://www.googleapis.com/auth/calendar.events'],
+  );
 
   bool _isVoiceInput = false;
   bool _isListening = false;
@@ -33,6 +42,40 @@ class _ChatScreenState extends State<ChatScreen> {
     _speech = stt.SpeechToText();
   }
 
+  Future<String?> _loadAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  Future<String?> _refreshAccessToken() async {
+    GoogleSignInAccount? googleUser = _googleSignIn.currentUser;
+    googleUser ??= await _googleSignIn.signInSilently();
+
+    if (googleUser == null) {
+      logger.w("Không thể đăng nhập lại silently");
+      setState(() {
+        _errorMessage = 'Vui lòng đăng nhập lại để tạo sự kiện.';
+      });
+      return null;
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final newAccessToken = googleAuth.accessToken;
+
+    if (newAccessToken != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('access_token', newAccessToken);
+      logger.i("Access token đã được làm mới");
+      return newAccessToken;
+    } else {
+      logger.w("Lỗi khi làm mới access token");
+      setState(() {
+        _errorMessage = 'Không thể làm mới token.';
+      });
+      return null;
+    }
+  }
+
   void _toggleListening() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
@@ -47,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
         onError: (error) {
           setState(() {
             _isListening = false;
-            _errorMessage = "Không thể nhận diện giọng nói. Vui lòng thử lại!";
+            _errorMessage = 'Không thể nhận diện giọng nói. Vui lòng thử lại!';
           });
         },
       );
@@ -69,7 +112,7 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       } else {
         setState(() {
-          _errorMessage = "Thiết bị không hỗ trợ nhận diện giọng nói.";
+          _errorMessage = 'Thiết bị không hỗ trợ nhận diện giọng nói.';
         });
       }
     } else {
@@ -84,7 +127,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _messages.add({'role': 'user', 'content': text});
-      _isLoading = false;
+      _isLoading = true;
       _errorMessage = null;
       _isVoiceInput = false;
       _showKeyboardInput = false;
@@ -93,15 +136,62 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
     _scrollToBottom();
 
-    final response = await _dialogflowService.detectIntent(text);
-    setState(() {
-      if (response != null) {
-        _messages.add({'role': 'assistant', 'content': response});
-      } else {
-        _messages.add({'role': 'assistant', 'content': 'Xin lỗi, tôi không hiểu.'});
+    final result = await _dialogflowService.detectIntent(text);
+
+    if (result != null) {
+      final responseText = result['response'];
+      final intent = result['intent'];
+      final action = result['action'];
+      final data = result['data'];
+
+      setState(() {
+        _messages.add({'role': 'assistant', 'content': responseText});
+      });
+      if (intent == 'CALENDAR' && action == 'CREATE_EVENT' && data != null) {
+        final accessToken = await _loadAccessToken();
+        if (accessToken != null &&
+            data['start_date'] != null &&
+            data['end_date'] != null &&
+            (data['title'] != null || data['summary'] != null)) {
+          final startDate = data['start_date'].replaceAll(RegExp(r'\+.*$'), '');
+          final endDate = data['end_date'].replaceAll(RegExp(r'\+.*$'), '');
+
+          final calendarService = CalendarService();
+          final success = await calendarService.createEvent(
+            accessToken: accessToken,
+            title: data['title'] ?? data['summary'],
+            startDate: startDate,
+            endDate: endDate,
+            onTokenExpired: _refreshAccessToken,
+          );
+
+          setState(() {
+            _messages.add({
+              'role': 'assistant',
+              'content': success
+                  ? '🗓 Sự kiện "${data['title'] ?? data['summary']}" đã được tạo thành công!'
+                  : '❌ Không thể tạo sự kiện. Vui lòng kiểm tra thông tin.',
+            });
+          });
+        } else {
+          setState(() {
+            _messages.add({
+              'role': 'assistant',
+              'content': '❌ Thiếu thông tin hoặc không thể lấy access token.',
+            });
+          });
+        }
       }
+    } else {
+      setState(() {
+        _messages.add({'role': 'assistant', 'content': 'Xin lỗi, tôi không hiểu.'});
+      });
+    }
+
+    setState(() {
       _isLoading = false;
     });
+
     _scrollToBottom();
   }
 
@@ -291,15 +381,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName ?? 'User';
-    final String? userAvatarUrl = FirebaseAuth.instance.currentUser?.photoURL;
+    final String? userAvatarUrl = user?.photoURL;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isKeyboardVisible = bottomInset > 0;
+
     if (isKeyboardVisible && !_keyboardVisible) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
     }
     _keyboardVisible = isKeyboardVisible;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -386,8 +478,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
           ),
-
-
           _buildInputBar(),
         ],
       ),
