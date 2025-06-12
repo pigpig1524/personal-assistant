@@ -9,8 +9,12 @@ Key is now copy to image when build Docker. This action is not good. But, in thi
 Dcoker ignore file wiil be update later when final deployment is released.
 
 
-## Setup environment variables
-Place it at `backend/.env`
+## Configure secrets
+Use your own secrets, or the shared one. Place it at `backend/.env`
+
+The required secrets are:
+- `OPENAI_API_KEY` (string): The API key of OpenAI LLM models
+- `GCP_PROJECT_ID` (string): The cloud project ID on GCP
 
 ## Local testing
 

@@ -2,6 +2,7 @@ import yaml
 import json
 from easydict import EasyDict as edict
 import platform
+from datetime import date
 # from app.db.models import Position, PositionOut
 
 def load_yaml(file_path: str):
@@ -21,3 +22,6 @@ def load_yaml(file_path: str):
     except Exception as err:
         print('config file cannot be read.')
         print(err)
+
+def get_current_date():
+    return date.today().isoformat()
