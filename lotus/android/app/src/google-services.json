@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "496153837085",
+    "project_id": "effortless-pod-460108-e1",
+    "storage_bucket": "effortless-pod-460108-e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:496153837085:android:53a9ddd75ead5cc50e50f4",
+        "android_client_info": {
+          "package_name": "com.example.lotus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "496153837085-iqkgf5btbnljjnnob1h0mfmurmv11m8a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lotus",
+            "certificate_hash": "b421f8fd6a6c61d1e7c926683af82594f1f83e62"
+          }
+        },
+        {
+          "client_id": "496153837085-57qrdhgdl61avu9iv77rffomemrin2pt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-OqV5XvCL_7xmlXACHBW8KwUCW6Je5W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "496153837085-57qrdhgdl61avu9iv77rffomemrin2pt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
