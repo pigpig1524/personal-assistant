@@ -1,8 +1,6 @@
 # You need to change these config
 PROJECT_ID=effortless-pod-460108-e1
 VERSION=ipa-stag
-# APP=chatbot-app
-# CHAT_INDEXING_DB_BQ_REF=starry-battery-436907-j9.cake_chatbot_documents.product_infomation
 
 # These config will be updated automatically
 REPOSITORY_NAME=$VERSION
