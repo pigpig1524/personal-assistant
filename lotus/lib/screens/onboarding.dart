@@ -17,50 +17,14 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class CustomButton extends StatelessWidget {
-  const CustomButton({
-    super.key,
-    this.isTransparent = false,
-    required this.onPressed,
-    required this.child,
-  });
-
-  final bool isTransparent;
-  final VoidCallback onPressed;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isTransparent ? Colors.transparent : white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: isTransparent ? const BorderSide(color: Colors.black) : BorderSide.none,
-        ),
-        minimumSize: const Size(364, 48),
-      ),
-      child: child,
-    );
-  }
-}
-
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const _buttonSpacing = 16.0;
-  static const _imageHeight = 184.0;
-  static const _imageWidth = 163.0;
-
   Future<void> _signOut() async {
     try {
-      // Sign out from Firebase and Google
       await FirebaseAuth.instance.signOut();
       final googleSignIn = GoogleSignIn();
       if (await googleSignIn.isSignedIn()) {
         await googleSignIn.signOut();
       }
-
-      // Clear access token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
 
@@ -73,16 +37,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       logger.e('Error signing out: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi đăng xuất: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi đăng xuất: $e')));
       }
     }
   }
 
   Future<void> _navigateToCalendar() async {
     try {
-      // Load access token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final accessToken = prefs.getString('access_token');
 
@@ -94,7 +57,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         );
       } else {
-        // Try to refresh token if not available
         final googleSignIn = GoogleSignIn(
           scopes: ['email', 'https://www.googleapis.com/auth/calendar.events'],
         );
@@ -121,9 +83,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       logger.e('Lỗi khi truy cập Calendar: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     }
   }
@@ -133,60 +95,159 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final user = FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName ?? 'User';
 
+    // Define a common button style
+    final ButtonStyle commonButtonStyle = ElevatedButton.styleFrom(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      backgroundColor: white,
+      foregroundColor: black,
+      elevation: 2,
+    );
+
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: auth1gradient, // Use gradient for consistency with LoginScreen
-            ),
-          ),
-          Align(
-            alignment: const FractionalOffset(0.5, 0.6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      backgroundColor: white,
+      body: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  'assets/images/robot2.png',
-                  height: _imageHeight,
-                  width: _imageWidth,
-                  fit: BoxFit.cover,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Column for welcome text and subtitle
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome, $displayName!',
+                          style: onboardingheading,
+                        ),
+                        const SizedBox(height: 4), // small spacing
+                        Text(
+                          "Let's make today a nice day.",
+                          style: onboardingheading.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: user?.photoURL != null
+                          ? Image.network(
+                              user!.photoURL!,
+                              height: 80,
+                              width: 80,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              'assets/images/default_avt.png',
+                              height: 80,
+                              width: 80,
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 30),
-                Text(
-                  'Welcome, $displayName!',
-                  style: onboardingheading,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Your AI companion for everyday tasks',
-                  style: onboardingbody,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 60),
-                CustomButton(
-                  onPressed: _signOut,
-                  child: const Text('Sign Out', style: onboardingheading),
-                ),
-                const SizedBox(height: _buttonSpacing),
-                CustomButton(
-                  onPressed: _navigateToCalendar,
-                  child: const Text('View Calendar', style: onboardingheading),
-                ),
-                const SizedBox(height: _buttonSpacing),
-                CustomButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatScreen()),
-                    );
-                  },
-                  child: const Text('Start Chat', style: onboardingheading),
-                ),
+                const SizedBox(height: 16), // spacing before divider
+                const Divider(color: black, thickness: 1, height: 1),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  ElevatedButton(
+                    style: commonButtonStyle,
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatScreen()),
+                      );
+                    },
+                    child: Center(
+                      child: const Text('Chat', style: onboardingheading),
+                    ),
+                  ),
+                  const SizedBox(height: 16), // spacing between buttons
+                  ElevatedButton(
+                    style: commonButtonStyle,
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Activities feature coming soon!'),
+                        ),
+                      );
+                    },
+                    child: Center(
+                      child: const Text('Activities', style: onboardingheading),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: commonButtonStyle,
+                    onPressed: _navigateToCalendar,
+                    child: Center(
+                      child: const Text('Calendar', style: onboardingheading),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: commonButtonStyle,
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Planning feature coming soon!'),
+                        ),
+                      );
+                    },
+                    child: Center(
+                      child: const Text('Planning', style: onboardingheading),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: commonButtonStyle,
+                    onPressed: _signOut,
+                    child: Center(
+                      child: const Text('Sign Out', style: onboardingheading),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {});
+                },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF92A3FD),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/robot_light.png',
+                      fit: BoxFit.scaleDown, // scales image down to fit inside container
+                      height: 60, // control max height
+                      width: 60, // control max width
+                      alignment: Alignment.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

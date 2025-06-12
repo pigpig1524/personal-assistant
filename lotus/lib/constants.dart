@@ -68,8 +68,8 @@ const onboardingheading = TextStyle(
 );  
 const onboardingbody = TextStyle(
   fontFamily: 'Inter',
-  fontSize: 12,
-  fontWeight: FontWeight.w400,
+  fontSize: 16,
+  fontWeight: FontWeight.w600,
   color: Color(0xFF5856D6), 
   height: 1.5,
   letterSpacing: 0,

@@ -32,11 +32,14 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-     - assets/images/robot1.png
-     - assets/images/robot2.png
-     - assets/images/btn_google_light.png
-     - assets/images/default_avt.png
-     - assets/images/bot_avatar.png
+    - assets/images/robot_light.png
+    - assets/images/robot_dark.png
+    - assets/images/robot1.png
+    - assets/images/robot2.png
+    - assets/images/btn_google_light.png
+    - assets/images/default_avt.png
+    - assets/images/bot_avatar.png
+
   
   fonts:
       - family: Inter
