@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
+import 'package:lotus/screens/home_screen.dart';
 import 'package:lotus/services/dialogflow_service.dart';
 import 'package:lotus/services/calendar_service.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
-import 'onboarding.dart';
 
 final logger = Logger();
 
@@ -401,7 +401,7 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => OnboardingScreen()),
+              MaterialPageRoute(builder: (_) => HomeScreen()),
             );
           },
         ),
@@ -439,12 +439,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: [
                             Text(
                               "Hello, $displayName!",
-                              style: onboardingheading,
+                              style: homeHeadingTxtStyle1,
                             ),
                             const SizedBox(height: 20),
                             const Text(
                               "How can I assist you today?",
-                              style: onboardingbody,
+                              style: homeHeadingTxtStyle2,
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 30),

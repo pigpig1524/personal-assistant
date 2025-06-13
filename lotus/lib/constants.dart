@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+const white = Color(0xFFFFFFFF);
+const black = Color(0xFF000000);
+const black_light = Color(0xFF242124);
+const peri = Color(0xFF5856D6);
 
 const auth1gradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -38,10 +42,6 @@ const chatbotgradient = LinearGradient(
   ],
 );
 
-const white = Color(0xFFFFFFFF);
-const black = Color(0xFF000000);
-const peri = Color(0xFF5856D6);
-
 const auth1heading = TextStyle(
   fontFamily: 'Inter',
   fontSize: 36,
@@ -58,22 +58,50 @@ const auth1body = TextStyle(
   height: 1.5,
   letterSpacing: 0,
 );
-const onboardingheading = TextStyle(
+
+const homeGrayoutBackground = Color(0xFFF5F5F5); 
+const homeHeadingTxtStyle1 = TextStyle(
   fontFamily: 'Inter',
   fontSize: 20,
   fontWeight: FontWeight.w700,
-  color: Color(0xFF5856D6), 
+  color: black, 
   height: 1.5,
   letterSpacing: 0,
 );  
-const onboardingbody = TextStyle(
+const homeHeadingTxtStyle2 = TextStyle(
   fontFamily: 'Inter',
   fontSize: 16,
-  fontWeight: FontWeight.w600,
-  color: Color(0xFF5856D6), 
+  fontWeight: FontWeight.w400,
+  color: black, 
   height: 1.5,
   letterSpacing: 0,
 );
+const homeFunctionHeaderTxtStyle = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 20,
+  fontWeight: FontWeight.w700,
+  color: black,
+  height: 1.5,
+  letterSpacing: 0,
+);
+const homeFunctionBodyTxtStyle1 = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 14,
+  fontWeight: FontWeight.w400,
+  color: black,
+  height: 1.2,
+  letterSpacing: 0,
+);
+const homeFunctionBodyTxtStyle2 = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 14,
+  fontWeight: FontWeight.w400,
+  color: Color(0xFF6495ED),
+  height: 1.2,
+  letterSpacing: 0,
+);
+
+
 const eventbody = TextStyle(
   fontFamily: 'Poppins-Regular',
   fontSize: 12,

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:lotus/screens/home_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lotus/constants.dart';
 import 'login_screen.dart';
-import 'onboarding.dart';
 import 'package:logger/logger.dart';
 
 
@@ -127,7 +127,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           onPressed: () {
             Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
+            MaterialPageRoute(builder: (_) => HomeScreen()),
           );
           },
         ),

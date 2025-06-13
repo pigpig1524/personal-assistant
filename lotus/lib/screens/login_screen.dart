@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
-import 'package:lotus/screens/onboarding.dart';
+import 'package:lotus/screens/home_screen.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,9 +35,7 @@ class CustomButton extends StatelessWidget {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: child,
     );
@@ -59,19 +57,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (accessToken != null) {
         await _updateAccessTokenToFirestore(user, accessToken);
-        logger.i("Access token làm mới thành công, chuyển tới OnboardingScreen");
+        logger.i(
+          "Access token làm mới thành công, chuyển tới HomeScreen",
+        );
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
+            MaterialPageRoute(builder: (_) => HomeScreen()),
           );
         }
       } else {
-        logger.w("Không thể làm mới token, chuyển tới OnboardingScreen");
+        logger.w("Không thể làm mới token, chuyển tới HomeScreen");
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => OnboardingScreen()),
+            MaterialPageRoute(builder: (_) => HomeScreen()),
           );
         }
       }
@@ -80,7 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _updateAccessTokenToFirestore(User user, String accessToken) async {
+  Future<void> _updateAccessTokenToFirestore(
+    User user,
+    String accessToken,
+  ) async {
     await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
       'accessToken': accessToken,
       'email': user.email,
@@ -92,10 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: [
-          'email',
-          'https://www.googleapis.com/auth/calendar.events',
-        ],
+        scopes: ['email', 'https://www.googleapis.com/auth/calendar.events'],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -104,7 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -127,10 +128,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Test the token (optional, for debugging)
       final response = await http.get(
-        Uri.parse('https://www.googleapis.com/calendar/v3/calendars/primary/events'),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-        },
+        Uri.parse(
+          'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        ),
+        headers: {'Authorization': 'Bearer $accessToken'},
       );
 
       if (response.statusCode == 200) {
@@ -140,20 +141,20 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đăng nhập thành công!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Đăng nhập thành công!')));
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => OnboardingScreen()),
+          MaterialPageRoute(builder: (_) => HomeScreen()),
         );
       }
     } catch (e) {
       logger.e('Lỗi đăng nhập: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
       }
     }
   }
@@ -170,10 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<String?> _refreshAccessToken() async {
     final GoogleSignIn googleSignIn = GoogleSignIn(
-      scopes: [
-        'email',
-        'https://www.googleapis.com/auth/calendar.events',
-      ],
+      scopes: ['email', 'https://www.googleapis.com/auth/calendar.events'],
     );
 
     GoogleSignInAccount? googleUser = googleSignIn.currentUser;
@@ -202,27 +200,20 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: auth1gradient,
-            ),
-          ),
+          Container(decoration: const BoxDecoration(gradient: auth1gradient)),
           Align(
             alignment: const FractionalOffset(0.5, 0.6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  "assets/images/robot1.png",
+                  "assets/images/robot_light.png",
                   height: 184,
                   width: 163,
                   fit: BoxFit.cover,
                 ),
                 const SizedBox(height: 30),
-                const Text(
-                  "Hi! I’m Name",
-                  style: auth1heading,
-                ),
+                const Text("Hi! I’m Lotus", style: auth1heading),
                 const SizedBox(height: 20),
                 const Text(
                   "Let’s make today a nice day!",

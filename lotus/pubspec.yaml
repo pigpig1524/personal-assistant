@@ -1,6 +1,6 @@
 name: lotus
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -32,23 +32,16 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/robot_light.png
-    - assets/images/robot_dark.png
-    - assets/images/robot1.png
-    - assets/images/robot2.png
-    - assets/images/btn_google_light.png
-    - assets/images/default_avt.png
-    - assets/images/bot_avatar.png
+    - assets/images/
+    - assets/icons/
 
-  
   fonts:
-      - family: Inter
-        fonts:
-          - asset: assets/fonts/Inter_18pt-Medium.ttf
-          - asset: assets/fonts/Inter_18pt-Bold.ttf
-          - asset: assets/fonts/Inter_18pt-Light.ttf
-          - asset: assets/fonts/Inter_18pt-Regular.ttf
-          - asset: assets/fonts/Poppins-Regular.ttf
-          - asset: assets/fonts/Poppins-Bold.ttf
-          - asset: assets/fonts/OpenSans-VariableFont_wdth,wght.ttf
-          
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter_18pt-Medium.ttf
+        - asset: assets/fonts/Inter_18pt-Bold.ttf
+        - asset: assets/fonts/Inter_18pt-Light.ttf
+        - asset: assets/fonts/Inter_18pt-Regular.ttf
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+        - asset: assets/fonts/OpenSans-VariableFont_wdth,wght.ttf
