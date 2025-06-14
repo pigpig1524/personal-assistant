@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'https://www.googleapis.com/auth/calendar.events'],
+        scopes: ['email', 'https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/gmail.readonly',],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
