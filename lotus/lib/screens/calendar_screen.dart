@@ -9,8 +9,8 @@ import 'package:lotus/constants.dart';
 import 'login_screen.dart';
 import 'package:logger/logger.dart';
 
-
 final logger = Logger();
+
 class CalendarScreen extends StatefulWidget {
   final String accessToken;
   const CalendarScreen({required this.accessToken, super.key});
@@ -119,13 +119,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: white,
       appBar: AppBar(
+        backgroundColor: magnolia,
         centerTitle: true,
         title: const Text('Schedule'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => HomeScreen()),
           );

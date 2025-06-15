@@ -393,13 +393,15 @@ class _ChatScreenState extends State<ChatScreen> {
     _keyboardVisible = isKeyboardVisible;
 
     return Scaffold(
+      backgroundColor: white,
       appBar: AppBar(
+        backgroundColor: magnolia,
         centerTitle: true,
-        title: const Text(' '),
+        title: const Text('Chat'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => HomeScreen()),
             );

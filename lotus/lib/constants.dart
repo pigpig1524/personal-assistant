@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 const white = Color(0xFFFFFFFF);
 const black = Color(0xFF000000);
-const black_light = Color(0xFF242124);
+const blacklight = Color(0xFF242124);
 const peri = Color(0xFF5856D6);
+
+const periwinkle = Color(0xFFCCCCFF);
+const vistablue = Color(0xFF7C9ED9);
+const purpleblue = Color(0xFF92A3FD);
+const magnolia = Color(0xFFF8F4FF);
 
 const auth1gradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -59,6 +64,7 @@ const auth1body = TextStyle(
   letterSpacing: 0,
 );
 
+// HOME
 const homeGrayoutBackground = Color(0xFFF5F5F5); 
 const homeHeadingTxtStyle1 = TextStyle(
   fontFamily: 'Inter',
@@ -97,6 +103,25 @@ const homeFunctionBodyTxtStyle2 = TextStyle(
   fontSize: 14,
   fontWeight: FontWeight.w400,
   color: Color(0xFF6495ED),
+  height: 1.2,
+  letterSpacing: 0,
+);
+
+// EMAIL
+const emailTxttStyle1 = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 14,
+  fontWeight: FontWeight.w700,
+  color: black, 
+  height: 1.2,
+  letterSpacing: 0,
+);
+
+const emailTxttStyle2 = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 14,
+  fontWeight: FontWeight.w400,
+  color: black, 
   height: 1.2,
   letterSpacing: 0,
 );
