@@ -148,7 +148,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
 
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: black,))
           : error != null
               ? Center(child: Text(error!))
               : Column(

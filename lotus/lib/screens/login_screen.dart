@@ -43,6 +43,8 @@ class CustomButton extends StatelessWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,9 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (accessToken != null) {
         await _updateAccessTokenToFirestore(user, accessToken);
-        logger.i(
-          "Access token làm mới thành công, chuyển tới HomeScreen",
-        );
+        logger.i("Access token làm mới thành công, chuyển tới HomeScreen");
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -93,14 +93,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> signInWithGoogle() async {
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/gmail.readonly',],
+        scopes: [
+          'email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/gmail.compose',
+          'https://www.googleapis.com/auth/gmail.modify',
+        ],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         logger.w("Google Sign-In bị hủy");
+        setState(() {
+          _isLoading = false; // Stop loading if cancelled
+        });
         return;
       }
 
@@ -126,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
         await _updateAccessTokenToFirestore(user, accessToken);
       }
 
-      // Test the token (optional, for debugging)
       final response = await http.get(
         Uri.parse(
           'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -155,6 +167,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Always stop loading at the end
+        });
       }
     }
   }
@@ -222,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 60),
                 GestureDetector(
-                  onTap: signInWithGoogle,
+                  onTap: _isLoading ? null : signInWithGoogle,
                   child: Image.asset(
                     "assets/images/btn_google_light.png",
                     height: 46,
@@ -233,6 +251,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
+          if (_isLoading)
+            Container(
+              color: white,
+              child: const Center(
+                child: CircularProgressIndicator(color: black),
+              ),
+            ),
         ],
       ),
     );

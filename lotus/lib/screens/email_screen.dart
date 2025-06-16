@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotus/constants.dart';
 import 'package:googleapis/gmail/v1.dart' as gmail;
-import '../services/google_auth_client.dart';
-import 'email_list_screen.dart';
+import 'package:lotus/screens/email_list_screen.dart';
+import 'package:lotus/services/email_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 
 class EmailScreen extends StatefulWidget {
   const EmailScreen({super.key});
@@ -17,12 +18,15 @@ class _EmailScreenState extends State<EmailScreen> {
   User? user;
   String? photoUrl;
 
+  String? _accessToken;
   List<gmail.Message> emails = [];
-  List<String> selectedEmailSubjects = [];
-  List<gmail.Message> selectedEmails = [];
-  final maxEmailsInput = 3;
 
-  bool isLoading = true; // Add loading state
+  gmail.Message? selectedEmail;
+  String? selectedEmailSubject;
+  String? selectedEmailBody;
+  String? fromAddress;
+
+  bool isLoading = true;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -32,6 +36,10 @@ class _EmailScreenState extends State<EmailScreen> {
     ],
   );
 
+  final EmailService emailService = EmailService();
+  final List<Map<String, String>> chatMessages = [];
+  final TextEditingController _chatController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -40,177 +48,127 @@ class _EmailScreenState extends State<EmailScreen> {
     fetchEmails();
   }
 
-  void _navigateToEmailSelection() async {
-    final selected = await Navigator.push<List<gmail.Message>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EmailListScreen(
-          title: 'Select Emails',
-          emails: emails,
-          isSelectionMode: true,
-        ),
-      ),
-    );
-
-    if (selected != null) {
-      setState(() {
-        selectedEmails = selected;
-
-        // Extract just the subject for displaying
-        selectedEmailSubjects = selected
-            .map(
-              (e) =>
-                  e.payload?.headers
-                      ?.firstWhere(
-                        (h) => h.name?.toLowerCase() == 'subject',
-                        orElse: () => gmail.MessagePartHeader(
-                          name: '',
-                          value: 'No Subject',
-                        ),
-                      )
-                      .value ??
-                  'No Subject',
-            )
-            .toList();
-      });
-    }
-  }
-
   Future<void> fetchEmails() async {
     setState(() {
       isLoading = true;
     });
 
     final account = await _googleSignIn.signIn();
-    final headers = await account?.authHeaders;
-    if (headers == null) {
+    final auth = await account?.authentication;
+
+    if (auth == null || auth.accessToken == null) {
       setState(() {
         isLoading = false;
       });
       return;
     }
 
-    final client = GoogleAuthClient(headers);
-    final gmailApi = gmail.GmailApi(client);
+    _accessToken = auth.accessToken;
 
-    final messagesList = await gmailApi.users.messages.list(
-      'me',
-      maxResults: 20,
-    );
-
-    final fetchedEmails = <gmail.Message>[];
-
-    for (var message in messagesList.messages ?? []) {
-      final msg = await gmailApi.users.messages.get(
-        'me',
-        message.id!,
-        format: 'full',
-      );
-      fetchedEmails.add(msg);
+    if (account == null) {
+      setState(() {
+        isLoading = false;
+      });
+      return;
     }
+
+    final fetchedEmails = await emailService.fetchEmails(account);
 
     setState(() {
       emails = fetchedEmails;
-      isLoading = false;  // Loading finished
+      isLoading = false;
     });
   }
 
-  // ... rest of your code ...
+  String _decodeBase64(String data) {
+    final normalized = data.replaceAll('-', '+').replaceAll('_', '/');
+    return utf8.decode(base64.decode(normalized));
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+  String? _extractEmailBody(gmail.MessagePart? payload) {
+    if (payload == null) return null;
+
+    if (payload.parts != null) {
+      for (var part in payload.parts!) {
+        if (part.mimeType == 'text/plain' && part.body?.data != null) {
+          return _decodeBase64(part.body!.data!);
+        }
+      }
     }
 
-    return Scaffold(
-      backgroundColor: white,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Email Management'),
-        backgroundColor: magnolia,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundImage: photoUrl != null
-                  ? NetworkImage(photoUrl!)
-                  : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
-              child: photoUrl == null ? const Icon(Icons.account_circle, size: 40) : null,
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-          Center(
-            child: ElevatedButton(
-              onPressed: _navigateToEmailSelection,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: purpleblue,
-                foregroundColor: white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text('Select Emails'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (selectedEmailSubjects.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Selected Emails:', style: emailTxttStyle1),
-                  ...selectedEmailSubjects
-                      .take(maxEmailsInput)
-                      .map(
-                        (subject) => Text('- $subject', style: emailTxttStyle2),
-                      ),
-                ],
-              ),
-            ),
-          const Divider(),
-          if (selectedEmailSubjects.length >= maxEmailsInput)
-            const Expanded(child: EmailChatWidget())
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Please select at most three emails first.',
-                style: emailTxttStyle1,
-              ),
-            ),
-        ],
+    // Fallback to main body
+    if (payload.body?.data != null) {
+      return _decodeBase64(payload.body!.data!);
+    }
+
+    return null;
+  }
+
+  String? _getHeader(List<gmail.MessagePartHeader>? headers, String name) {
+    if (headers == null) return null;
+    return headers
+        .firstWhere(
+          (h) => h.name?.toLowerCase() == name.toLowerCase(),
+          orElse: () => gmail.MessagePartHeader(name: '', value: ''),
+        )
+        .value;
+  }
+
+  Future<void> _selectEmailFromList() async {
+    if (emails.isEmpty) return;
+
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EmailListScreen(
+          title: 'Select an Email',
+          emails: emails,
+          isSelectionMode: true,
+        ),
       ),
     );
+
+    if (selected != null &&
+        selected is List<gmail.Message> &&
+        selected.isNotEmpty) {
+      final email = selected.first;
+
+      final subject =
+          email.payload?.headers
+              ?.firstWhere(
+                (h) => h.name?.toLowerCase() == 'subject',
+                orElse: () =>
+                    gmail.MessagePartHeader(name: '', value: 'No Subject'),
+              )
+              .value ??
+          'No Subject';
+
+      final bodyData = _extractEmailBody(email.payload);
+      final body = bodyData ?? 'No content';
+
+      final rawFrom = _getHeader(email.payload?.headers, 'From') ?? '';
+      final from = extractEmailAddress(rawFrom);
+
+      setState(() {
+        selectedEmail = email;
+        selectedEmailSubject = subject;
+        selectedEmailBody = body;
+        fromAddress = from;
+        chatMessages.clear();
+      });
+    }
   }
-}
 
-
-class EmailChatWidget extends StatefulWidget {
-  const EmailChatWidget({super.key});
-
-  @override
-  State<EmailChatWidget> createState() => _EmailChatWidgetState();
-}
-
-class _EmailChatWidgetState extends State<EmailChatWidget> {
-  final List<Map<String, String>> chatMessages = [];
-  final TextEditingController _chatController = TextEditingController();
+  String extractEmailAddress(String fromHeader) {
+    final emailRegex = RegExp(r'<(.+?)>');
+    final match = emailRegex.firstMatch(fromHeader);
+    if (match != null && match.groupCount > 0) {
+      return match.group(1)!; // email inside <>
+    } else {
+      // If no <>, might be just the email or something else
+      return fromHeader;
+    }
+  }
 
   void sendMessage(String text) {
     setState(() {
@@ -221,17 +179,157 @@ class _EmailChatWidgetState extends State<EmailChatWidget> {
     _chatController.clear();
   }
 
-  void _generateBotReply(String userMessage) {
-    final botReply = 'Echo: $userMessage';
-
+  void _generateBotReply(String userMessage) async {
     setState(() {
-      chatMessages.add({'sender': 'Lotus', 'message': botReply});
+      chatMessages.add({'sender': 'Lotus', 'message': 'Thinking...'});
     });
-  }
 
-  void _voiceChat() {
-    // TODO: Implement voice chat logic
-    print('Voice chat activated');
+    final indexOfThinking = chatMessages.length - 1;
+
+    final result = await emailService.detectIntent(
+      userMessage,
+      selectedEmailSubject ?? 'No Subject',
+      selectedEmailBody ?? 'No content',
+    );
+
+    if (!mounted) return;
+
+    chatMessages.removeAt(indexOfThinking);
+
+    if (result != null) {
+      final action = result['action'];
+      final response = result['response'];
+
+      if (action == 'AUTOMATIC_RESPOND' && response is Map) {
+        final subject = response['subject'] ?? '';
+        final content = response['content'] ?? '';
+
+        // Show dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Send Suggested Email'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'To: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: fromAddress),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Subject: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: subject),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Content:\n',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: content),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      chatMessages.add({
+                        'sender': 'Lotus',
+                        'message': 'Action cancelled.',
+                      });
+                    });
+                  },
+                ),
+                TextButton(
+                  child: const Text('Save Draft'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    emailService.saveDraftEmail(
+                      to: fromAddress ?? '',
+                      subject: subject,
+                      body: content,
+                      accessToken: _accessToken!,
+                    );
+                    setState(() {
+                      chatMessages.add({
+                        'sender': 'Lotus',
+                        'message': 'Draft saved successfully.',
+                      });
+                    });
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('Send'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    emailService.sendEmail(
+                      to: fromAddress ?? '',
+                      subject: subject,
+                      body: content,
+                      accessToken: _accessToken!,
+                    );
+                    setState(() {
+                      chatMessages.add({
+                        'sender': 'Lotus',
+                        'message': 'Email sent successfully.',
+                      });
+                    });
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else if (action == 'EMAIL_CLASSIFICATION' ||
+          action == 'EMAIL_SUMMARIZATION') {
+        setState(() {
+          chatMessages.add({
+            'sender': 'Lotus',
+            'message': response?.toString() ?? 'No response received.',
+          });
+        });
+      } else {
+        setState(() {
+          chatMessages.add({
+            'sender': 'Lotus',
+            'message':
+                response?.toString() ??
+                'Unrecognized action or empty response.',
+          });
+        });
+      }
+    } else {
+      setState(() {
+        chatMessages.add({
+          'sender': 'Lotus',
+          'message': 'Sorry, something went wrong.',
+        });
+      });
+    }
   }
 
   Widget _buildChatBubble(Map<String, String> message) {
@@ -285,78 +383,143 @@ class _EmailChatWidgetState extends State<EmailChatWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: chatMessages.length,
-            itemBuilder: (context, index) {
-              return _buildChatBubble(chatMessages[index]);
-            },
-          ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: white,
+    appBar: AppBar(
+      centerTitle: true,
+      title: const Text('Email Management'),
+      backgroundColor: magnolia,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Refresh Emails',
+          onPressed: fetchEmails,
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Row(
+          padding: const EdgeInsets.only(right: 16),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundImage: photoUrl != null
+                ? NetworkImage(photoUrl!)
+                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+            child: photoUrl == null
+                ? const Icon(Icons.account_circle, size: 40)
+                : null,
+          ),
+        ),
+      ],
+    ),
+    body: isLoading
+        ? const Center(child: CircularProgressIndicator(color: black))
+        : Column(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _chatController,
-                  decoration: const InputDecoration(
-                    hintText: 'Type your request/ question.',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _selectEmailFromList,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: purpleblue,
+                    foregroundColor: white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
                       vertical: 12,
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(24)),
-                    ),
                   ),
+                  child: const Text('Emails'),
                 ),
               ),
-              const SizedBox(width: 8),
-              InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  if (_chatController.text.trim().isNotEmpty) {
-                    sendMessage(_chatController.text.trim());
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: purpleblue,
-                    ),
-                    child: const Icon(Icons.send, color: white),
+              const SizedBox(height: 16),
+              if (selectedEmailSubject != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Selected Email:', style: emailTxttStyle1),
+                      Text('- $selectedEmailSubject', style: emailTxttStyle2),
+                    ],
                   ),
                 ),
-              ),
+              const Divider(),
+              if (selectedEmailSubject == '')
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    'Please select your email first.',
+                    style: emailTxttStyle1,
+                  ),
+                )
+              else
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: chatMessages.length,
+                          itemBuilder: (context, index) {
+                            return _buildChatBubble(chatMessages[index]);
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _chatController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Type your request/ question.',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(24),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(60),
+                              onTap: () {
+                                if (_chatController.text.trim().isNotEmpty) {
+                                  sendMessage(_chatController.text.trim());
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: purpleblue,
+                                  ),
+                                  child: const Icon(Icons.send, color: white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
             ],
           ),
-        ),
-        const SizedBox(height: 10),
-        Center(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: _voiceChat,
-            child: Container(
-              padding: const EdgeInsets.all(6.0),
-              child: Image.asset(
-                'assets/images/robot_dark.png',
-                height: 60,
-                width: 60,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
+  );
+}
+
 }

@@ -21,7 +21,7 @@ class EmailListScreen extends StatefulWidget {
 }
 
 class _EmailListScreenState extends State<EmailListScreen> {
-  final Set<int> selectedIndexes = {};
+  int? selectedIndex; // Changed from Set<int> to a single index
 
   String _getHeaderValue(gmail.Message message, String name) {
     return message.payload?.headers
@@ -43,12 +43,12 @@ class _EmailListScreenState extends State<EmailListScreen> {
         actions: widget.isSelectionMode
             ? [
                 TextButton(
-                  onPressed: () {
-                    final selected = selectedIndexes
-                        .map((i) => widget.emails[i])
-                        .toList();
-                    Navigator.pop(context, selected);
-                  },
+                  onPressed: selectedIndex != null
+                      ? () {
+                          final selectedEmail = widget.emails[selectedIndex!];
+                          Navigator.pop(context, [selectedEmail]);
+                        }
+                      : null,
                   child: const Text('Done', style: emailTxttStyle1),
                 ),
               ]
@@ -75,21 +75,16 @@ class _EmailListScreenState extends State<EmailListScreen> {
               ? DateFormat.MMMd().add_jm().format(parsedDate)
               : 'No Date';
 
-          final isSelected = selectedIndexes.contains(index);
+          final isSelected = selectedIndex == index;
 
           return ListTile(
             leading: widget.isSelectionMode
-                ? Checkbox(
-                    value: isSelected,
-                    onChanged: (bool? selected) {
+                ? Radio<int>(
+                    value: index,
+                    groupValue: selectedIndex,
+                    onChanged: (int? selected) {
                       setState(() {
-                        if (selected == true) {
-                          if (selectedIndexes.length < 3) {
-                            selectedIndexes.add(index);
-                          }
-                        } else {
-                          selectedIndexes.remove(index);
-                        }
+                        selectedIndex = selected;
                       });
                     },
                   )

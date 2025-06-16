@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:googleapis/gmail/v1.dart' as gmail;
 import 'package:intl/intl.dart';
+import 'package:lotus/constants.dart';
 
 class EmailDetailScreen extends StatelessWidget {
   final gmail.Message email;
@@ -33,6 +34,7 @@ class EmailDetailScreen extends StatelessWidget {
     final subject = _getHeader('Subject');
     final from = _getHeader('From');
     final date = _getHeader('Date');
+
     DateTime? parsedDate;
     try {
       parsedDate = DateFormat(
@@ -59,18 +61,53 @@ class EmailDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(subject)),
+      appBar: AppBar(title: const Text("Email Detail")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            Text(
-              'From: $from',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Title:',
+                  style: emailTxttStyle1,
+                ),
+                Text(subject, style: emailTxttStyle2),
+              ],
+            ),
+            const SizedBox(height: 12),
+            RichText(
+              text: TextSpan(
+                style: emailTxttStyle2,
+                children: [
+                  const TextSpan(
+                    text: 'From: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: from),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            RichText(
+              text: TextSpan(
+                style: emailTxttStyle2,
+                children: [
+                  const TextSpan(
+                    text: 'Date: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: formattedDate),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Content:',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('Date: $formattedDate'),
-            const SizedBox(height: 16),
             Text(body),
           ],
         ),

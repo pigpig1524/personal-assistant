@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:logger/logger.dart';
-import 'package:lotus/screens/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lotus/constants.dart';
 import 'package:lotus/screens/chat_screen.dart';
@@ -108,22 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _navigateToProfile() async {
-    try {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ProfileScreen()),
-      );
-    } catch (e) {
-      logger.e('Error when access to email functions: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -160,29 +143,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
 
-                    Material(
-                      color: white,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          _navigateToProfile();
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(12.0),
-                          child: user?.photoURL != null
-                              ? Image.network(
-                                  user!.photoURL!,
-                                  height: 70,
-                                  width: 70,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.asset(
-                                  'assets/images/default_avt.png',
-                                  height: 70,
-                                  width: 70,
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
+                    Container(
+                      padding: EdgeInsets.all(12.0),
+                      child: ClipOval(
+                        child: user?.photoURL != null
+                            ? Image.network(
+                                user!.photoURL!,
+                                height: 70,
+                                width: 70,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'assets/images/default_avt.png',
+                                height: 70,
+                                width: 70,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                     ),
                   ],
@@ -318,19 +294,25 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 10), 
 
             Center(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: _signOut,
-                child: Container(
-                  padding: EdgeInsets.all(6.0),
-                  child: Image.asset(
-                    'assets/icons/logout.png',
-                    height: 60,
-                    width: 60,
-                    fit: BoxFit.contain,
+              child: Material(
+                color: Colors.transparent,
+                shape: CircleBorder(), // Makes Material circular
+                child: InkWell(
+                  onTap: _signOut,
+                  customBorder: CircleBorder(), // Makes ripple circular
+                  child: Container(
+                    padding: EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle, // Makes container circular
+                    ),
+                    child: Image.asset(
+                      'assets/icons/logout.png',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
