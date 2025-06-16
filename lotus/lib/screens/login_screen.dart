@@ -86,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       'email': user.email,
       'displayName': user.displayName,
       'lastSignIn': FieldValue.serverTimestamp(),
+      'id': user.uid,
     }, SetOptions(merge: true));
   }
 
@@ -220,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
                 const Text(
-                  "Hi! I’m Name",
+                  "Hi! I’m Lotus",
                   style: auth1heading,
                 ),
                 const SizedBox(height: 20),
