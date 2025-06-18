@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, File, UploadFile
+from app.services.event_ocr import process_image
 
 router = APIRouter(tags=['Calendar Event Service'])
 
-@router.post('/api/calendar/createEvent')
-def create_event(data = Body(..., embed=True)):
-    pass
+@router.post("/utils/ocr")
+async def ocr_table(file: UploadFile = File(...)):
+    response = await process_image(file)
+    return response

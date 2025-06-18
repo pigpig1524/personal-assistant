@@ -2,7 +2,7 @@ import yaml
 import json
 from easydict import EasyDict as edict
 import platform
-from datetime import date
+from datetime import date, datetime
 # from app.db.models import Position, PositionOut
 
 def load_yaml(file_path: str):
@@ -24,4 +24,5 @@ def load_yaml(file_path: str):
         print(err)
 
 def get_current_date():
-    return date.today().isoformat()
+    # return date.today().isoformat()
+    return datetime.now().isoformat()

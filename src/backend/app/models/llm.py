@@ -7,7 +7,7 @@ class Intent:
 
 class Event(BaseModel):
     summary: str
-    description: str
+    description: Optional[str]
     start_date: datetime
     end_date: datetime
 

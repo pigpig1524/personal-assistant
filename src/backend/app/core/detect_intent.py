@@ -36,7 +36,7 @@ class DetectIntentAgent:
         sys_prompt = sys_prompt.replace(r'{lang_code}', lang_code)
 
         history = get_messages(user_id)
-        history = history[:8]
+        history = history[:12]
 
         conversation = [
             {'role': 'system', 'content': sys_prompt},
