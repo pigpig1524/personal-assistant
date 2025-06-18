@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+final userId = FirebaseAuth.instance.currentUser?.uid;
 final logger = Logger();
 
 class DialogflowService {
@@ -10,7 +12,7 @@ class DialogflowService {
   Future<Map<String, dynamic>?> detectIntent(String message) async {
     try {
       final payload = {
-        "session_id": "test",
+        "user_id": userId,
         "user_query": message,
       };
 

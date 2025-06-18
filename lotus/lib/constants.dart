@@ -151,3 +151,19 @@ const chatbody = TextStyle(
   height: 1.5,
   letterSpacing: 0,
 );
+const onboardingheading = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 20,
+  fontWeight: FontWeight.w700,
+  color: Color(0xFF5856D6), 
+  height: 1.5,
+  letterSpacing: 0,
+);  
+const onboardingbody = TextStyle(
+  fontFamily: 'Inter',
+  fontSize: 16,
+  fontWeight: FontWeight.w600,
+  color: Color(0xFF5856D6), 
+  height: 1.5,
+  letterSpacing: 0,
+);
