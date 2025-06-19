@@ -103,7 +103,6 @@ DETECT_CUSTOM: |
   If the intent is "CREATE_EVENT":
     1. Parse the provided information in user query:
       summary: str
-      description: Optional[str]
       start_date: datetime
       end_date: datetime
     2. If the information is fulfilled, pleasse response in JSON format 
@@ -113,7 +112,7 @@ DETECT_CUSTOM: |
         "response": "Your response here tell user ok you will create the event for them"
         "data": {
             summary: str
-            description: Optional[str]
+            description: null
             start_date: datetime
             end_date: datetime
         }
@@ -132,6 +131,7 @@ EMAIL_DETECT_ACTION: |
       - AUTOMATIC_RESPOND
       - EMAIL_SUMMARIZATION
       - EMAIL_CLASSIFICATION
+      - EMAIL_QA : If user want to Q&A about the email piece of detail like purpose or sender for example
     * If user want to respond the email, please detect the template user want:
       - ACCEPT
       - RECEIVE
@@ -146,13 +146,21 @@ AUTOMATIC_RESPOND: |
   Respond to the email by the 'subject' and 'content' above. Follow the 'template' and comply with the 'note'. Return onlyonly in this format:
   Subject: [Your response subject here]  
   Content: [Your response content here]
+
+  Please respond in the language used by received email
 EMAIL_CLASSIFICATION: |
   Subject: {subject}
   Content: {content}
 
   Classify the mail by the 'subject' and 'content' above to one of these classes: {email_type}. Only return the class name.
 EMAIL_SUMMARIZATION: |
+  user_query: {user_query}
   Subject: {subject}
   Content: {content}
 
   Summarize the email by the 'subject' and 'content' above, and respond in the original language of the email. Respond with the summarization only.
+EMAIL_QA: |
+  You are a friendly AI-powered personal assistant.
+  User want to QA about the email they received
+  Please answer their question with friendly tone and respond them as fulfilled as possible
+  Please anser in user_query language

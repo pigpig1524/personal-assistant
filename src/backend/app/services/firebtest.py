@@ -49,4 +49,4 @@ def add_message(user_id: str, messages: list[dict]):
 
 
 if __name__ == '__main__':
-    get_messages('wiyRetm3iZaqvbfVxqqG9qAknPQ2')
+    print(get_messages('123')[-4:])

@@ -36,7 +36,7 @@ class DetectIntentAgent:
         sys_prompt = sys_prompt.replace(r'{lang_code}', lang_code)
 
         history = get_messages(user_id)
-        history = history[:12]
+        history = history[-6:]
 
         conversation = [
             {'role': 'system', 'content': sys_prompt},
@@ -45,7 +45,7 @@ class DetectIntentAgent:
         conversation.extend(history)
         conversation.append({'role': 'user', 'content': user_query})
         # resposne = create_chat(conversation)
-
+        print(conversation)
         response = client.beta.chat.completions.parse(
             model='gpt-4o-mini',
             messages=conversation,
@@ -53,7 +53,7 @@ class DetectIntentAgent:
         )
         response = response.choices[0].message.parsed
         response_json = response.model_dump()
-        # print(resposne)
+        print(response_json)
         # response_json = json.loads(resposne)
         assistant_reply = response_json['response']
 
