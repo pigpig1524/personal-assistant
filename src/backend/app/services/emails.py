@@ -30,18 +30,17 @@ def postprocess_automatic_respond(respond: str):
         return {'subject': 'Failed to Process', 'content': 'Failed to Process'}
 
 def process_auto_repy(context: EmailIntent, 
-                      subject: str,
-                      content: str):
-    sys_prompt : str = PROMPTS.get('AUTOMATIC_RESPOND')
+                      email: EmailRequest):
+    user_prompt : str = PROMPTS.get('AUTOMATIC_RESPOND')
     template = TEMPLATES.get(context.template)
-    sys_prompt = sys_prompt.format(subject=subject,
-                                   content=content,
-                                   template=template,
-                                   note=context.note)
+    user_prompt = user_prompt.format(subject=email.subject,
+                                     content=email.content,
+                                     template=template,
+                                     note=context.note)
     
     response = client.chat.completions.create(
         model='gpt-4o-mini',
-        messages=[{'role': 'user', 'content': sys_prompt}]
+        messages=[{'role': 'user', 'content': user_prompt}]
     )
     message = response.choices[0].message.content
     reuslt = postprocess_automatic_respond(message)
@@ -79,7 +78,8 @@ def process_classify_email(email: EmailRequest):
 
 def process_summarization(email: EmailRequest):
     sys_prompt : str = PROMPTS.get('EMAIL_SUMMARIZATION')
-    sys_prompt = sys_prompt.format(subject=email.subject,
+    sys_prompt = sys_prompt.format(user_query=email.user_query,
+                                   subject=email.subject,
                                    content=email.content)
     response = client.chat.completions.create(
         model='gpt-4o-mini',
@@ -88,16 +88,30 @@ def process_summarization(email: EmailRequest):
     message = response.choices[0].message.content
     return message
 
+def process_email_qa(email: EmailRequest):
+    sys_prompt = PROMPTS.get('EMAIL_QA')
+    user_prompt = f"user_query = {email.user_query}\n\nsubject = {email.subject}\n\ncontent = {email.content}"
+    response = client.chat.completions.create(
+        model='gpt-4o-mini',
+        messages=[
+            {'role': 'system', 'content': sys_prompt},
+            {'role': 'user', 'content': user_prompt}
+        ]
+    )
+    message = response.choices[0].message.content
+    return message 
+
 def main_process(data: EmailRequest):
     context = detect_action(data.user_query)
     if context.action == 'AUTOMATIC_RESPOND':
         response = process_auto_repy(context=context,
-                                     subject=data.subject,
-                                     content=data.content)
+                                     email=data)
     elif context.action == 'EMAIL_CLASSIFICATION':
         response = process_classify_email(email=data)
     elif context.action == 'EMAIL_SUMMARIZATION':
         response = process_summarization(email=data)
+    elif context.action == 'EMAIL_QA':
+        response = process_email_qa(email=data)
     return {'intent': 'EMAIL',
             'action': context.action,
             'response': response}
