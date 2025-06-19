@@ -245,9 +245,13 @@ class _EmailScreenState extends State<EmailScreen> {
                           text: 'Content:\n',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: content),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 160, // Set the height you want
+                    child: SingleChildScrollView(child: Text(content)),
                   ),
                 ],
               ),
@@ -383,143 +387,143 @@ class _EmailScreenState extends State<EmailScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: white,
-    appBar: AppBar(
-      centerTitle: true,
-      title: const Text('Email Management'),
-      backgroundColor: magnolia,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Refresh Emails',
-          onPressed: fetchEmails,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 20,
-            backgroundImage: photoUrl != null
-                ? NetworkImage(photoUrl!)
-                : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
-            child: photoUrl == null
-                ? const Icon(Icons.account_circle, size: 40)
-                : null,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: white,
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Email Management'),
+        backgroundColor: magnolia,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Emails',
+            onPressed: fetchEmails,
           ),
-        ),
-      ],
-    ),
-    body: isLoading
-        ? const Center(child: CircularProgressIndicator(color: black))
-        : Column(
-            children: [
-              const SizedBox(height: 16),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _selectEmailFromList,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: purpleblue,
-                    foregroundColor: white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: const Text('Emails'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (selectedEmailSubject != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Selected Email:', style: emailTxttStyle1),
-                      Text('- $selectedEmailSubject', style: emailTxttStyle2),
-                    ],
-                  ),
-                ),
-              const Divider(),
-              if (selectedEmailSubject == '')
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Please select your email first.',
-                    style: emailTxttStyle1,
-                  ),
-                )
-              else
-                Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: chatMessages.length,
-                          itemBuilder: (context, index) {
-                            return _buildChatBubble(chatMessages[index]);
-                          },
-                        ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: photoUrl != null
+                  ? NetworkImage(photoUrl!)
+                  : const AssetImage('assets/images/default_avatar.png')
+                        as ImageProvider,
+              child: photoUrl == null
+                  ? const Icon(Icons.account_circle, size: 40)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: black))
+          : Column(
+              children: [
+                const SizedBox(height: 16),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _selectEmailFromList,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: purpleblue,
+                      foregroundColor: white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Emails'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (selectedEmailSubject != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Selected Email:', style: emailTxttStyle1),
+                        Text('- $selectedEmailSubject', style: emailTxttStyle2),
+                      ],
+                    ),
+                  ),
+                const Divider(),
+                if (selectedEmailSubject == '')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'Please select your email first.',
+                      style: emailTxttStyle1,
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: chatMessages.length,
+                            itemBuilder: (context, index) {
+                              return _buildChatBubble(chatMessages[index]);
+                            },
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _chatController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Type your request/ question.',
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _chatController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Type your request/ question.',
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(24),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              borderRadius: BorderRadius.circular(60),
-                              onTap: () {
-                                if (_chatController.text.trim().isNotEmpty) {
-                                  sendMessage(_chatController.text.trim());
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(12.0),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(60),
+                                onTap: () {
+                                  if (_chatController.text.trim().isNotEmpty) {
+                                    sendMessage(_chatController.text.trim());
+                                  }
+                                },
                                 child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: purpleblue,
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: purpleblue,
+                                    ),
+                                    child: const Icon(Icons.send, color: white),
                                   ),
-                                  child: const Icon(Icons.send, color: white),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
-                ),
-            ],
-          ),
-  );
-}
-
+              ],
+            ),
+    );
+  }
 }

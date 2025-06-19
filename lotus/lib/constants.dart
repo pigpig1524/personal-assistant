@@ -68,7 +68,7 @@ const auth1body = TextStyle(
 const homeGrayoutBackground = Color(0xFFF5F5F5); 
 const homeHeadingTxtStyle1 = TextStyle(
   fontFamily: 'Inter',
-  fontSize: 20,
+  fontSize: 16,
   fontWeight: FontWeight.w700,
   color: black, 
   height: 1.5,
@@ -76,7 +76,7 @@ const homeHeadingTxtStyle1 = TextStyle(
 );  
 const homeHeadingTxtStyle2 = TextStyle(
   fontFamily: 'Inter',
-  fontSize: 16,
+  fontSize: 14,
   fontWeight: FontWeight.w400,
   color: black, 
   height: 1.5,
@@ -84,7 +84,7 @@ const homeHeadingTxtStyle2 = TextStyle(
 );
 const homeFunctionHeaderTxtStyle = TextStyle(
   fontFamily: 'Inter',
-  fontSize: 20,
+  fontSize: 16,
   fontWeight: FontWeight.w700,
   color: black,
   height: 1.5,

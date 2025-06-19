@@ -149,14 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: user?.photoURL != null
                             ? Image.network(
                                 user!.photoURL!,
-                                height: 70,
-                                width: 70,
+                                height: 60,
+                                width: 60,
                                 fit: BoxFit.cover,
                               )
                             : Image.asset(
                                 'assets/images/default_avt.png',
-                                height: 70,
-                                width: 70,
+                                height: 60,
+                                width: 60,
                                 fit: BoxFit.cover,
                               ),
                       ),
