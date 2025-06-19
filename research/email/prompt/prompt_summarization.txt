@@ -1,0 +1,4 @@
+Subject: {subject}
+Content: {content}
+
+Summarize the email by the 'subject' and 'content' above, and respond in the original language of the email. Respond with the summarization only.
